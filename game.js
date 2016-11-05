@@ -2,7 +2,7 @@
 
 	var game = new Phaser.Game(
 		//The width and height of the game in pixels
-		1000, 600,
+		1200, 600,
 		//Type of graphic rendering to use (Auto tells Phaser to detect if WebGL is supported.  If not, it will default to Canvas)
 		Phaser.Auto,
 		//The parent element of the game, referenced in the html page
@@ -14,19 +14,6 @@
 		}	
 	);
 
-	function preload(){
-		// Load the spritesheet assets. In ex. 'character.png', telling Phaser each frame is 40x64
-		game.load.spritesheet('character', 'assets/character.png', 40, 64);
-
-		// Load mummy 37x45 with 18 frames
-		game.load.spritesheet('mummy', 'assets/metalslug_mummy37x45.png', 37, 45, 18);
-
-		// Load tilemap and image.  It follows the Tilemap.TILE_JSON format that Phaser knows.  Uses Tiled to create this file.
-		// Cache-key 'map' and 'level'.
-		game.load.tilemap('map', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
-		game.load.image('level', 'assets/level.png');
-	}
-
 	var player; // The player-controller sprite
 	var facing = 'right'; // Which direction the character is facing (default is 'left')
 	var hozMove = 160; // The amount to move horizontally 
@@ -37,11 +24,36 @@
 	var mummy;
 	var walk;
 	var move;
+	var spacefield;
+	var platforms;
+	var logo;
+	var score = 0;
+	var scoreText;
+
+	function preload(){
+		// Load the spritesheet assets. In ex. 'character.png', telling Phaser each frame is 40x64
+		// Load mummy 37x45 with 18 frames
+		game.load.spritesheet('mummy', 'assets/metalslug_mummy37x45.png', 37, 45, 18);
+
+		// Load Logo
+		game.load.image('FSA', 'assets/fullstackLogo.png');
+
+		// Load background
+		game.load.image('starfield', 'assets/background.png');
+
+		//Load Ledge
+		game.load.image('ledge', 'assets/tile-floor.png')
+
+		// Load tilemap and image.  It follows the Tilemap.TILE_JSON format that Phaser knows.  Uses Tiled to create this file.
+		// Cache-key 'map' and 'level'.
+		game.load.tilemap('map', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
+		game.load.image('level', 'assets/level.png');
+	}
+
 
 	function create() {
-
 		// Make the background, this is the world of the game
-        game.stage.backgroundColor = '#D3D3D3';
+    	spacefield = game.add.tileSprite(100,395,1500,900,'starfield');
 
 		// Start the physics system ARCADE, this will give us basic velocity and speed.
 		game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -54,7 +66,7 @@
 		layer.resizeWorld(); // resize entire world to match the size of the tile map(originally 500x500)
 
 		//Create and add a sprite to the game at the position (7*64 x 13*64) and using spritesheet 'character'
-		player = game.add.sprite(448, 832, 'mummy');
+		player = game.add.sprite(200, 900, 'mummy');
 		player.smoothed = false;
 		// Scale the sprite;
 		player.scale.set(2);
@@ -64,12 +76,22 @@
 
 		// start the animation by using its key ('walk').  30 is the frame rate and true means it will loop when it finishes
 		move = player.animations.play('walk', 30, true);
-
-		player.anchor.setTo(.5,.5);
-
+		player.anchor.setTo(.2,.2);
 		move.enableUpdate = true;
 
-		// test = player.scale.y;
+
+
+		// Add Logo and scale Logo
+		logo = game.add.group();
+		logo.enableBody = true;
+		//set up timer to load the logo and call createLogo function
+		game.time.events.repeat(Phaser.Timer.SECOND * 2, 100, createLogo, this);
+
+		//set score for the game
+		scoreText = game.add.text(300, 100, 'Score: 0', {fontSize: '32px', fill: '#000'});
+		//fixed text to camera
+		scoreText.fixedToCamera = true;
+
 
 		//	By default, sprits do not have a physics 'body'
 		//	Before we can adjust its physics properties, need to add a 'body' by enabling
@@ -88,9 +110,38 @@
 
 	}
 
+	function createLogo(){
+		for(var i = 0; i < 10; i++){
+			var star = logo.create(Math.random()*i*500, 0, 'FSA');
+			star.scale.setTo(.2,.2);
+			// add gravity
+			star.body.gravity.y = 100;
+
+			// add random bounce value
+			star.body.bounce.y = 0.7 + Math.random() * 0.2;
+		}
+	}	
+
 	function update(){
+		//check if a player overlaps with the logo
+		game.physics.arcade.overlap(player, logo, collectStar, null, this);
+
+		function collectStar (player, star) {
+			//removes star from screen
+			star.kill();
+
+			// Add and update the score
+			score += 10;
+			scoreText.text = 'Score: ' + score;
+		}
+
+
+		// Set image to scroll
+		spacefield.tilePosition.x += .2;
+
 		// Player-layer collission. Allows sprite to collide with the game layer;  Sprite will fall through.  Returns a boolean value
 		game.physics.arcade.collide(player, layer);
+		game.physics.arcade.collide(player, logo);
 
 		// Reset the x (horizontal) velocity every update so player movement is not getting compounded
 		player.body.velocity.x = 0;

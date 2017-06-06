@@ -32,28 +32,34 @@
 
 	function preload(){
 		// Load the spritesheet assets. In ex. 'character.png', telling Phaser each frame is 40x64
-		// Load mummy 37x45 with 18 frames
-		game.load.spritesheet('mummy', 'assets/metalslug_mummy37x45.png', 37, 45, 18);
+		// Load mummy 37x45 with 18 frames split
+		game.load.spritesheet('mummy', 'assets/metalslug_mummy37x45.png', 37, 45, 16);
 
 		// Load Logo
 		game.load.image('FSA', 'assets/fullstackLogo.png');
 
-		// Load background
-		game.load.image('starfield', 'assets/background.png');
+		// Load background sky
+		game.load.image('starfield', 'assets/background.png');	
 
-		//Load Ledge
-		game.load.image('ledge', 'assets/tile-floor.png')
+		// 1 of 1 ----------------------------------------------------------------------
+			//Load Ledge
+			game.load.image('ledge', 'assets/tile-floor.png')
 
-		// Load tilemap and image.  It follows the Tilemap.TILE_JSON format that Phaser knows.  Uses Tiled to create this file.
-		// Cache-key 'map' and 'level'.
-		game.load.tilemap('map', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
-		game.load.image('level', 'assets/level.png');
+			// Load tilemap and image.  It follows the Tilemap.TILE_JSON format that Phaser knows.  Uses Tiled to create this file.
+			// Cache-key 'map' and 'level'.
+			game.load.tilemap('map', 'assets/map.json', null, Phaser.Tilemap.TILED_JSON);
+			game.load.image('level', 'assets/level.png');
+		// -------------------------------------------------------------------------------	
 	}
 
 
 	function create() {
+		// The order the sprites are created is the order it's going to show on page
 		// Make the background, this is the world of the game
     	spacefield = game.add.tileSprite(100,395,1500,900,'starfield');
+
+    	// Make the background, this is the world of the game
+    	trees = game.add.tileSprite(100,395,1500,900,'trees');
 
 		// Start the physics system ARCADE, this will give us basic velocity and speed.
 		game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -65,7 +71,7 @@
 		layer = map.createLayer('Tile Layer 1'); // Create layer based on map.json on assets folder.  It will look into file 'layers.name = Tile Layer 1'
 		layer.resizeWorld(); // resize entire world to match the size of the tile map(originally 500x500)
 
-		//Create and add a sprite to the game at the position (7*64 x 13*64) and using spritesheet 'character'
+		//Create and add a sprite to the game at the position (200 x 900) and using spritesheet 'character'
 		player = game.add.sprite(200, 900, 'mummy');
 		player.smoothed = false;
 		// Scale the sprite;
@@ -74,23 +80,26 @@
 		//walk animations, no other parameters so it will use the available frames in the sprite sheet
 		walk = player.animations.add('walk');
 
+
 		// start the animation by using its key ('walk').  30 is the frame rate and true means it will loop when it finishes
 		move = player.animations.play('walk', 30, true);
 		player.anchor.setTo(.2,.2);
 		move.enableUpdate = true;
 
 
-
 		// Add Logo and scale Logo
 		logo = game.add.group();
 		logo.enableBody = true;
 		//set up timer to load the logo and call createLogo function
-		game.time.events.repeat(Phaser.Timer.SECOND * 2, 100, createLogo, this);
+		game.time.events.repeat(Phaser.Timer.SECOND * 2, 10, createLogo, this);
+
+
 
 		//set score for the game
 		scoreText = game.add.text(300, 100, 'Score: 0', {fontSize: '32px', fill: '#000'});
 		//fixed text to camera
 		scoreText.fixedToCamera = true;
+
 
 
 		//	By default, sprits do not have a physics 'body'
@@ -181,15 +190,6 @@
 			//Add 650 and the current time together and set that value to 'jumpTimer'
 			//The 'jumpTimer' is how long in milliseconds between jumps.  Here it will be 650 ms
 			jumpTimer = game.time.now + 625;
-		}
-
-		// Check if 'facing' is 'left'.  referecing the spritesheet.
-		if (facing === 'left'){
-			// Set the 'player' to the second (1) frame ('facing' is 'left')
-			player.frame = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];		
-		} else if (facing === 'right'){
-			// Set the 'player' to the first (0) frame ('facing' is 'right').	
-			player.frame = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
 		}
 
 	}
